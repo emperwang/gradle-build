@@ -7,6 +7,9 @@ plugins {
     id 'application'
 }
 
+project.sourceCompatibility = 1.8
+project.targetCompatibility = 1.8
+
 // 库配置
 repositories {
     // Use jcenter for resolving dependencies.
@@ -31,8 +34,289 @@ application {
     mainClassName = 'com.wk.App'
 }
 
+// 第一种创建任务
 tasks.register("hello"){
     doLast {
         println 'Hello World'
     }
 }
+
+
+// 第三种定义任务
+task world {
+    println "hello world3"
+}
+
+// 第二种创建任务
+tasks.create(name: "hello2") {
+    println "hello world2"
+}
+// 定义任务的属性
+tasks.register("welcome"){
+    group = 'welcome'
+    description = 'Produces a greeting'
+    doLast {
+        println 'Hello World'
+    }
+}
+
+// 是任务的消息可配置
+class Greeting extends DefaultTask {
+    String msg
+    String recp
+
+    @TaskAction
+    void sayMsg(){
+        println "${msg}, ${recp}"
+    }
+}
+
+tasks.register("cusMsg", Greeting) {
+    group = 'welcome'
+    description = 'Produces a world greeting'
+    msg = 'Hello'
+    recp = 'gradle'
+}
+
+// 通过属性配置,来判断是否跳过某函数执行
+task skipHello {
+    group = 'welcome'
+    description = 'if skip hello'
+    onlyIf {
+        // 只有当此表达式为 true，才会执行此函数
+        project.hasProperty('skipHello')
+    }
+    doLast {
+        println "skip hello world"
+    }
+}
+// 当使用 gradlew skipHello -PskipHello 就会执行
+// 当使用 gradlew skipHello 就不会执行
+//skipHello.onlyIf {!project.hasProperty('skipHello')}
+
+// 打印jar包
+task printJars {
+    group = 'printinfo'
+    description = 'print the jars in runtime path'
+    doLast {
+      configurations.compileClasspath.each {tmp ->  println tmp.name}
+    }
+}
+
+// 打印项目中各个module的目录
+task printModules {
+    group = 'printinfo'
+    description = 'print modules info'
+    doLast {
+        project.getAllprojects().each {
+            pro ->  println  pro.projectDir
+        }
+    }
+}
+
+task printBuildPath {
+    group = 'printinfo'
+    description = 'print build path info'
+    doLast {
+       println "buildDir  = $project.buildDir.absolutePath"
+       println "buildFile = $project.buildFile.absolutePath"
+       println "buildScript = $project.buildscript.sourceFile.absolutePath"
+    }
+}
+
+// 拷贝配置文件
+task copyConfig(type: Copy){
+    group = 'operation'
+    description = 'copy config'
+    // 此处可以定义多个 from, 也就是可以从多个目录中拷贝
+    from('src/main/resources') {
+        include '**/*.properties'
+        exclude '**/*.txt'
+    }
+    from('src/main/resources') {
+        include '**/*.xml'
+    }
+    exclude '**/*.bak'
+    includeEmptyDirs = false
+    // 设置文件 及 文件的 mode, 用于类似 unix的权限格式
+    fileMode=755
+    dirMode=755
+    into "$buildDir/config"
+}
+// 拷贝执行脚本
+task copyScript(type: Copy) {
+    group = 'operation'
+    description = 'copy script'
+    from ("src/bin") {
+        include "**/*.sh"
+    }
+    exclude '**/*.bak'
+    includeEmptyDirs = false
+    fileMode=755
+    dirMode=755
+    into "$buildDir/bin"
+}
+
+// 拷贝依赖jar
+// compileClasspath, testCompileClasspath, testRuntimeClasspath
+// 解释 可以看 gradle java plugin 路径: https://docs.gradle.org/current/userguide/java_plugin.html
+task copyLib(type: Copy){
+    group = 'operation'
+    description = 'copy lib'
+    from configurations.compileClasspath
+    into "$buildDir/lib"
+}
+
+// 同时执行copy操作
+task assemblyConfig {
+    group = 'operation'
+    description = 'copy config lib script'
+}
+assemblyConfig.dependsOn({
+    tasks.findAll {
+        task -> task.name.startsWith("copy")
+    }
+})
+
+// 打印编译后 class的目录 以及 resources的目录
+task printClassResources {
+    group = 'printinfo'
+    description = 'print classes and resources dir'
+    doLast {
+        // 打印java源文件的 路径
+        print "java srcs = "
+        println sourceSets.main.java.srcDirs.each {itt->println(itt.path)}
+        // 打印java的输出路径
+        println "java output = $sourceSets.main.java.outputDir.absolutePath"
+        // 打印资源的路径
+        print "resource srcs = "
+        println sourceSets.main.resources.srcDirs.each {rsrc -> println(rsrc.absolutePath)}
+        //println sourceSets.main.resources.outputDir.absolutePath
+    }
+}
+
+// 把业务包打成jar包
+// 包名: [archiveBaseName]-[archiveAppendix]-[archiveVersion]-[archiveClassifier].[archiveExtension]
+// first-demo-1.0.0-uber.jar
+task busjar(type: Jar){
+    archiveBaseName="first"
+    archiveAppendix="demo"
+    archiveVersion="1.0.0"
+    archiveClassifier="uber"
+    archiveExtension="jar"
+    // classes 来源
+    from {
+        sourceSets.main.java.outputDir
+    }
+    /*into {
+        project.getBuildDir().absolutePath + "/boot"
+    }*/
+    // 最后输出的目录
+    destinationDirectory = file(project.getBuildDir().absolutePath + "/boot")
+    dirMode = 755
+    fileMode = 755
+    manifest {
+        attributes (
+                "Manifest-Version": 1.0,
+                "Main-Class" : 'com.wk.App'
+        )
+    }
+}
+busjar.dependsOn("compileJava")
+
+// 把所有的依赖 以及 业务包 打包一起
+task fatjar(type: Jar) {
+    archiveBaseName="fat"
+    archiveAppendix="demo"
+    archiveVersion="1.0.0"
+    archiveClassifier="uber"
+    archiveExtension="jar"
+    // classes 来源
+    from {
+        // classes
+        sourceSets.main.java.outputDir
+    }
+    from {
+        // 配置文件
+        sourceSets.main.resources.srcDirs
+    }
+    from {
+        // 依赖jar包
+        configurations.compileClasspath
+    }
+    destinationDirectory = file(project.getBuildDir().absolutePath + "/fat")
+    dirMode = 755
+    fileMode = 755
+    manifest {
+        attributes (
+                "Manifest-Version": 1.0,
+                "Main-Class" : 'com.wk.App'
+        )
+    }
+}
+
+// 把 config lib bin boot(业务包)  做一个打包操作
+// [archiveBaseName]-[archiveAppendix]-[archiveVersion]-[archiveClassifier].[archiveExtension]
+task zipfile(type: Zip){
+    archiveBaseName="zipfile"
+    archiveAppendix="demo"
+    archiveVersion="1.0.0"
+    archiveExtension="zip"
+    into ("lib"){
+        from "$buildDir/lib"
+    }
+    into ("config") {
+        from "$buildDir/config"
+    }
+    into ("bin") {
+        from "$buildDir/bin"
+    }
+    into ("boot") {
+        from "$buildDir/boot"
+    }
+    dirMode = 755
+    fileMode = 755
+    destinationDirectory = file(project.getBuildDir().absolutePath + "/zip")
+    includeEmptyDirs = false
+}
+zipfile.dependsOn("assemblyConfig")
+
+task tarfile(type: Tar){
+    archiveBaseName="tarfile"
+    archiveAppendix="demo"
+    archiveVersion="1.0.0"
+    archiveExtension="tar"
+    into ("lib"){
+        from "$buildDir/lib"
+    }
+    into ("config") {
+        from "$buildDir/config"
+    }
+    into ("bin") {
+        from "$buildDir/bin"
+    }
+    into ("boot") {
+        from "$buildDir/boot"
+    }
+    dirMode = 755
+    fileMode = 755
+    destinationDirectory = file(project.getBuildDir().absolutePath + "/tar")
+    includeEmptyDirs = false
+}
+
+tarfile.dependsOn("assemblyConfig")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
