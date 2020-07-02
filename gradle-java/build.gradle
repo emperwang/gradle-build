@@ -71,13 +71,13 @@ tasks.register("hello"){
 
 // 第三种定义任务
 task world {
-    // 此world task相当于默认方法,此println语句呢,相当于,默认语句,每次执行都会执行此方法
-    println "hello world3"
+    // 此种语句是 配置语句，在配置阶段执行
+    //println "hello world3"
 }
 
 // 第二种创建任务
 tasks.create(name: "hello2") {
-    println "hello world2"
+    //println "hello world2"
 }
 // 定义任务的属性
 tasks.register("welcome"){
@@ -420,4 +420,32 @@ task printJavaplugin {
         //println project.dependencyCacheDirName
 
     }
+}
+
+// 生命周期的钩子函数
+/*gradle.beforeSettings {
+    println "build.gradle: before setting"
+}*/
+gradle.projectsEvaluated {
+    println "build.gradle: project evaluated"
+}
+
+gradle.afterProject {
+    println "build.gradle: after project"
+}
+
+gradle.taskGraph.whenReady {
+    println "taskGraph when ready"
+}
+
+gradle.taskGraph.beforeTask {
+    println "taskGraph before task"
+}
+
+gradle.taskGraph.afterTask {
+    println "taskGraph after task"
+}
+
+gradle.buildFinished {
+    println "buildFinished"
 }
