@@ -27,7 +27,8 @@ task encode {
     }
 }
 
-
+// 配置编码
+[compileJava, compileTestJava, javadoc]*.options*.encoding = 'UTF-8'
 
 project.sourceCompatibility = 1.8
 project.targetCompatibility = 1.8
