@@ -307,8 +307,12 @@ task tarfile(type: Tar){
 tarfile.dependsOn("assemblyConfig")
 
 
+task releasepackage {
+    group = 'release'
+    description = 'package files'
+}
 
-
+releasepackage.dependsOn("busjar", "assemblyConfig", "tarfile", "zipfile", "fatjar")
 
 
 
