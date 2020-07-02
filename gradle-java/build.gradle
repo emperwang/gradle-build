@@ -1,3 +1,13 @@
+// buildscript 是编译脚本的属性; 可以配置其maven仓库位置,添加依赖,其添加的依赖可以在 编译脚本中使用
+buildscript {
+    repositories {
+        maven {url 'https://maven.aliyun.com/repository/public'}
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'commons-codec', name: 'commons-codec', version: '1.2'
+    }
+}
 // 插件
 plugins {
     // Apply the java plugin to add support for Java
@@ -6,6 +16,18 @@ plugins {
     // Apply the application plugin to add support for building a CLI application.
     id 'application'
 }
+
+
+// 导入 commons-codec的包,并在函数中使用
+import org.apache.commons.codec.binary.Base64
+task encode {
+    doLast {
+        def byte[] encodStr = new Base64().encode("hello world".getBytes("utf-8"))
+        println new String(encodStr)
+    }
+}
+
+
 
 project.sourceCompatibility = 1.8
 project.targetCompatibility = 1.8
@@ -323,7 +345,7 @@ releasepackage.dependsOn("busjar", "assemblyConfig", "tarfile", "zipfile", "fatj
 File[] listFiles(String dir){
     file(dir).listFiles().sort()
 }
-
+// 调用自定义方法
 task callcusfunc {
     group = 'call custom function'
     description = 'list dir files'
@@ -334,10 +356,40 @@ task callcusfunc {
     }
 }
 
+// 构建一个的函数; @javax.inject.Inject 的使用
+class CustomTask extends DefaultTask {
+    final String message;
+    final int number;
 
+    @javax.inject.Inject
+    CustomTask(String msg, Integer num){
+        this.message = msg
+        this.number = num
+    }
 
+    @TaskAction
+    void printMsg(){
+        println "this is CustomTask println"
+        print this.message +"\t"
+        println this.number
+    }
+}
+// 方式一
+tasks.create('parametertask', CustomTask,  "123",1)
+// 方式二
+task parametertask1(type: CustomTask, constructorArgs: ['parame', 123])
 
+// task rules的使用; 使用此方式定义task,可以从命令行来进行调用
 
-
+tasks.addRule("Pattern: ping<ID>") {
+    String taskName ->
+        if (taskName.startsWith("ping")){
+            task(taskName){
+                doLast {
+                    println "Pinging: " + (taskName)
+                }
+            }
+        }
+}
 
 
