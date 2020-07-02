@@ -392,4 +392,31 @@ tasks.addRule("Pattern: ping<ID>") {
         }
 }
 
+// Finalizer task; 终结任务的执行
+task taskFx {
+    doLast {
+        println "taskFx"
+    }
+}
 
+task taskFy {
+    doLast {
+        println "taskFy"
+    }
+}
+
+taskFx.finalizedBy taskFy
+
+// 打印java插件上的 一些目录信息
+task printJavaplugin {
+    group = 'printinfo'
+    description = 'print java plugin directory info'
+    doLast {
+        println "javaPlugin dir info :"
+        println "libsDirName = $project.libsDirName"
+        println "distsDirName = $project.distsDirName"
+        println "docsDirName = $project.docsDirName"
+        //println project.dependencyCacheDirName
+
+    }
+}
