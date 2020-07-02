@@ -14,7 +14,11 @@ project.targetCompatibility = 1.8
 repositories {
     // Use jcenter for resolving dependencies.
     // You can declare any Maven/Ivy/file repository here.
+    // 优先使用本地; 之后是国内库; 之后是maven 中央仓库
     mavenLocal()
+    maven {
+        url 'https://maven.aliyun.com/repository/public'
+    }
     mavenCentral()
     jcenter()
 }
@@ -44,6 +48,7 @@ tasks.register("hello"){
 
 // 第三种定义任务
 task world {
+    // 此world task相当于默认方法,此println语句呢,相当于,默认语句,每次执行都会执行此方法
     println "hello world3"
 }
 
@@ -314,8 +319,20 @@ task releasepackage {
 
 releasepackage.dependsOn("busjar", "assemblyConfig", "tarfile", "zipfile", "fatjar")
 
+// 自定义一个函数, 读取一个目录中的文件,并进行返回
+File[] listFiles(String dir){
+    file(dir).listFiles().sort()
+}
 
-
+task callcusfunc {
+    group = 'call custom function'
+    description = 'list dir files'
+    doLast {
+        // 定义局部变量
+        def dir = "$buildDir/boot"
+        listFiles(dir).each {ff -> println ff.name}
+    }
+}
 
 
 
