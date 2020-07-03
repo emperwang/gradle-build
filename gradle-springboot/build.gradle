@@ -34,10 +34,12 @@ subprojects {
         implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-web'
         compileOnly 'org.projectlombok:lombok'
-        testImplementation 'junit:junit:4.12'
         testImplementation('org.springframework.boot:spring-boot-starter-test') {
             exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
         }
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+        
+        annotationProcessor 'org.projectlombok:lombok'
     }
 }
 

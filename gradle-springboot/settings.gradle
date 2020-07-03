@@ -9,4 +9,5 @@
 
 rootProject.name = 'springboot-gradle'
 include 'springboot-child1'
+include 'springboot-lifecycle'
 
