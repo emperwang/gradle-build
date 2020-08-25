@@ -8,6 +8,19 @@ buildscript {
         classpath group: 'commons-codec', name: 'commons-codec', version: '1.2'
     }
 }
+
+
+/*
+compileOnly — for dependencies that are necessary to compile your production code but shouldn’t be
+            part of the runtime classpath
+implementation (supersedes compile) — used for compilation and runtime
+runtimeOnly (supersedes runtime) — only used at runtime, not for compilation
+testCompileOnly — same as compileOnly except it’s for the tests
+testImplementation — test equivalent of implementation
+testRuntimeOnly — test equivalent of runtimeOnly
+/*
+
+
 // 插件
 plugins {
     // Apply the java plugin to add support for Java
