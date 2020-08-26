@@ -18,7 +18,7 @@ runtimeOnly (supersedes runtime) — only used at runtime, not for compilation
 testCompileOnly — same as compileOnly except it’s for the tests
 testImplementation — test equivalent of implementation
 testRuntimeOnly — test equivalent of runtimeOnly
-/*
+*/
 
 
 // 插件
